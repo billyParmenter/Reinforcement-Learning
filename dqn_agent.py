@@ -67,7 +67,7 @@ class DQN_Agent():
     max_length = max(len(entry) for entry in batch)
     batch = [entry + [None] * (max_length - len(entry)) for entry in batch]
 
-    states, actions, rewards, next_states, dones = np.array(batch).T
+    states, actions, rewards, next_states, dones = np.array(batch, dtype=object).T
 
     states = np.array(states.tolist(), dtype=np.uint8)
     next_states = np.array(next_states.tolist(), dtype=np.uint8)
@@ -114,7 +114,7 @@ class DQN_Agent():
 
     self.replay_buffer.append((state, action, reward, next_state, done))
 
-    if len(self.replay_buffer) >= self.batch_size:
+    if done and len(self.replay_buffer) >= self.batch_size:
       states, actions, rewards, next_states, dones = self.sample_from_replay_buffer()
 
       targets = rewards + self.discount_factor * np.max(self.target_q_network.predict(next_states, verbose=0), axis=1) * (1 - dones)
