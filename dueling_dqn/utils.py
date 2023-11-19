@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 
 def describe_env(env):
@@ -14,33 +15,17 @@ def describe_env(env):
     return num_obs, num_actions
 
 
-def plot_results(results, agent_name, smoothing=1):
-    episode_steps = [result[1] for result in results]
-    episode_returns = [result[2] for result in results]
+def plot_results(results, result_index, window_size, title):
+    plt.figure(figsize=(25, 10))
 
-    flat_steps = [item for sublist in episode_steps for item in sublist]
-    flat_returns = [item for sublist in episode_returns for item in sublist]
+    for result in results:
+        sns.lineplot(
+            np.convolve(
+                result[result_index], np.ones(window_size) / window_size, mode="same"
+            ),
+            label=f"(LR, EF) {(result[3]) }",
+        )
 
-    moving_avg_steps = np.convolve(
-        flat_steps, np.ones(smoothing) / smoothing, mode="valid"
-    )
-    moving_avg_returns = np.convolve(
-        flat_returns, np.ones(smoothing) / smoothing, mode="valid"
-    )
-
-    plt.figure(figsize=(12, 6))
-
-    plt.subplot(1, 2, 1)
-    plt.plot(moving_avg_steps)
-    plt.title(f"{agent_name} - Episode Steps")
-    plt.xlabel("Step")
-    plt.ylabel(f"Smoothed Steps (smoothing={smoothing})")
-
-    plt.subplot(1, 2, 2)
-    plt.plot(moving_avg_returns)
-    plt.title(f"{agent_name} - Episode Returns")
-    plt.xlabel("Step")
-    plt.ylabel(f"Smoothed Returns (smoothing={smoothing})")
-
-    plt.tight_layout()
+    plt.title(title)
+    plt.legend()
     plt.show()
