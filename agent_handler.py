@@ -29,6 +29,7 @@ class Agent_handler():
         if done or steps >= self.max_steps - 1:
           episode_steps.append(steps)
           episode_returns.append(total_reward)
+          print("End of episode, n_steps: {}".format(steps))
           break
 
         state = next_state

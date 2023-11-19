@@ -88,6 +88,10 @@ class DQN_Agent():
       layers.Dense(self.num_actions, activation='linear')  
     ])
 
+
+    # model = tf.keras.Sequential()
+    # model.add(layers.Input(shape=self.num_obs))
+
     model.compile(
       loss=tf.keras.losses.Huber(),
       optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
