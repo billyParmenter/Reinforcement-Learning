@@ -1,73 +1,86 @@
 class Agent_handler():
   def __init__(self, agent_params):
+    self.notify_percent = agent_params["notify_percent"]
     self.num_episodes = agent_params["num_episodes"]
     self.max_steps = agent_params["max_steps"]
-    self.notify_percent = agent_params["notify_percent"]
-    self.update_rate = agent_params["update_rate"]
     self.skip = agent_params["skip"]
+
+    self.progress_delta = 0
+    self.progress = 0
+
+
+  def update_progress(self, episode):
+    self.progress_delta += round(((episode) / self.num_episodes) * 100) - self.progress
+    self.progress = round(((episode) / self.num_episodes) * 100)
+
+    if self.progress_delta >= self.notify_percent:
+      print(f'\tEpisode {episode + 1}/{self.num_episodes} {self.progress}%')
+      self.progress_delta = round(((episode + 1) / self.num_episodes) * 100) - self.progress
+    elif episode >= self.num_episodes:
+      print(f'\tEpisode {episode + 1}/{self.num_episodes} 100%')
+
+
+
+  def checkpoint(self, episode, agent):
+    if episode % 100 == 0 and episode != 0:
+      self.last_save = agent.checkpoint()
+
 
   def train_agent(self, agent, env):
     episode_steps = []
-    episode_returns = []
-    progress = 0
-    progress_delta = 0
+    episode_rewards = []
+    self.progress = 0
+    self.progress_delta = 0
+    self.last_save = ''
 
     print(f'\tEpisode 0/{self.num_episodes} 0%')
 
     for episode in range(self.num_episodes):
       steps = 0
       total_reward = 0
+
       state_frame, _ = env.reset()
       state = self.crop(state_frame)
       action = agent.select_action(state)
-      last_save = ''
-      training = True
 
-      for _ in range(self.skip): # skip the start of each game
+      for _ in range(self.skip):
         env.step(0)
 
-      while training:
-        try:
+      try:
+        while True:
           frame, reward, done, _, _ = env.step(action)
+
           next_state = self.crop(frame)
-          steps += 1
-          total_reward += reward
           next_action = agent.select_action(next_state)
           agent.update_q_values(state, action, reward, next_state, done)
 
-          if done or steps >= self.max_steps:
-            episode_steps.append(steps)
-            episode_returns.append(total_reward)
-            training = False
-            break
-
+          total_reward += reward
           state = next_state
           action = next_action
+          steps += 1
 
-          if episode % self.update_rate == 0:
-            agent.target_q_network.set_weights(agent.q_network.get_weights())
+          agent.update_target_network(episode)
+            
+          self.checkpoint(episode, agent)
 
-          if episode % 100 == 0 and episode != 0:
-            last_save = agent.checkpoint()
+          if done or steps >= self.max_steps:
+            episode_steps.append(steps)
+            episode_rewards.append(total_reward)
+            break
 
-          progress_delta += round(((episode + 1) / self.num_episodes) * 100) - progress
-          progress = round(((episode + 1) / self.num_episodes) * 100)
 
-          if progress_delta >= self.notify_percent:
-            print(f'\tEpisode {episode + 1}/{self.num_episodes} {progress}%')
-            progress_delta = round(((episode + 1) / self.num_episodes) * 100) - progress
-          elif progress >= 100:
-            print(f'\tEpisode {episode + 1}/{self.num_episodes} {progress}%')
+      except Exception as e:
+        if self.last_save != '':
+          agent = agent(None, self.last_save)
+          episode = round(episode, -2)
+        else:
+          raise e
 
-        except Exception as e:
-          if last_save != '':
-            agent = agent(None, last_save)
-          else:
-            raise e
+      self.update_progress(episode)
+    
+    print("\nDone training!\n\n")
 
-      print("\nDone training!\n\n")
-
-    return episode + 1, episode_steps, episode_returns
+    return episode + 1, episode_steps, episode_rewards
 
   def train(self, agents, env):
     results = []
