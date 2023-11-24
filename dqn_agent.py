@@ -1,10 +1,12 @@
-from datetime import datetime
-import random
-import numpy as np
+import os
 import tensorflow as tf
+import numpy as np
+import random
+import json
+
 from tensorflow.keras import layers
 from collections import deque
-import json
+from datetime import datetime
 
 class DQN_Agent():
   def __init__(self, agent_params=None, load_path=None):
@@ -18,24 +20,33 @@ class DQN_Agent():
     if load_path:
       self.load(load_path)
 
-    else:
-      self.num_obs = agent_params["num_obs"]
-      self.num_actions = agent_params["num_actions"]
-      self.learning_rate = agent_params["learning_rate"]
-      self.discount_factor = agent_params["discount_factor"]
-      self.exploration_factor = agent_params["exploration_factor"]
+    elif agent_params:
+      self.init_params(agent_params)
 
-      self.q_network = self.build_q_network()
-      self.target_q_network = self.build_q_network()
+    else:
+      raise Exception("No parameters or load path given.")
+
+
+  def init_params(self, params):
+    self.num_obs = params["num_obs"]
+    self.update_rate = params["update_rate"]
+    self.num_actions = params["num_actions"]
+    self.learning_rate = params["learning_rate"]
+    self.discount_factor = params["discount_factor"]
+    self.exploration_factor = params["exploration_factor"]
+
+    self.q_network = self.build_q_network()
+    self.target_q_network = self.build_q_network()
 
 
   def checkpoint(self):
-    return self.save("DQN_" + datetime.now().strftime("%Y%m%d_%H%M%S"))
+    return self.save("DQN_" + datetime.now().strftime("%Y%m%d_%H"))
 
 
   def save(self, save_path):
+    os.makedirs("models", exist_ok=True)
     # Save agent_params
-    with open(save_path + "_params.json", "w") as params_file:
+    with open("models/" + save_path + "_params.json", "w") as params_file:
       json.dump({
         "num_obs": self.num_obs,
         "num_actions": self.num_actions,
@@ -45,24 +56,23 @@ class DQN_Agent():
       }, params_file)
 
     # Save model weights
-    self.q_network.save_weights(save_path + "_model.h5")
+    self.q_network.save_weights("models/" + save_path + "_model.h5")
 
     return save_path
 
   def load(self, load_path):
     # Load agent_params
-    with open(load_path + "_params.json", "r") as params_file:
+    with open("models/" + load_path + "_params.json", "r") as params_file:
       params_data = json.load(params_file)
-      self.num_obs = params_data["num_obs"]
-      self.num_actions = params_data["num_actions"]
-      self.learning_rate = params_data["learning_rate"]
-      self.discount_factor = params_data["discount_factor"]
-      self.exploration_factor = params_data["exploration_factor"]
+      self.init_params(params_data)
 
-    # Build the model and load weights
-    self.q_network = self.build_q_network()
-    self.target_q_network = self.build_q_network()
-    self.q_network.load_weights(load_path + "_model.h5")
+    self.q_network.load_weights("models/" + load_path + "_model.h5")
+
+
+  
+  def update_target_network(self, episode):
+    if episode % self.update_rate == 0:
+      self.target_q_network.set_weights(self.q_network.get_weights())
 
 
 
