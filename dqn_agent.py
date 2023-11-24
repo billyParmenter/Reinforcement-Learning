@@ -1,3 +1,4 @@
+from datetime import datetime
 import random
 import numpy as np
 import tensorflow as tf
@@ -6,14 +7,8 @@ from collections import deque
 import json
 
 class DQN_Agent():
-  def __init__(self, agent_params, load_path=None):
-    self.num_obs = agent_params["num_obs"]
-    self.num_actions = agent_params["num_actions"]
-    self.learning_rate = agent_params["learning_rate"]
-    self.discount_factor = agent_params["discount_factor"]
-    self.exploration_factor = agent_params["exploration_factor"]
+  def __init__(self, agent_params=None, load_path=None):
     self.verbose = 0
-
     buffer_size = 10000
     batch_size=32
 
@@ -24,8 +19,18 @@ class DQN_Agent():
       self.load(load_path)
 
     else:
+      self.num_obs = agent_params["num_obs"]
+      self.num_actions = agent_params["num_actions"]
+      self.learning_rate = agent_params["learning_rate"]
+      self.discount_factor = agent_params["discount_factor"]
+      self.exploration_factor = agent_params["exploration_factor"]
+
       self.q_network = self.build_q_network()
       self.target_q_network = self.build_q_network()
+
+
+  def checkpoint(self):
+    return self.save("DQN_" + datetime.now().strftime("%Y%m%d_%H%M%S"))
 
 
   def save(self, save_path):
@@ -41,6 +46,8 @@ class DQN_Agent():
 
     # Save model weights
     self.q_network.save_weights(save_path + "_model.h5")
+
+    return save_path
 
   def load(self, load_path):
     # Load agent_params
@@ -72,7 +79,7 @@ class DQN_Agent():
     states = np.array(states.tolist(), dtype=np.uint8)
     next_states = np.array(next_states.tolist(), dtype=np.uint8)
 
-    next_states = np.array([state.reshape((210, 160, 3)) for state in next_states])
+    next_states = np.array([state.reshape(self.num_obs) for state in next_states])
 
     return states, actions, rewards, next_states, dones
 
@@ -88,9 +95,6 @@ class DQN_Agent():
       layers.Dense(self.num_actions, activation='linear')  
     ])
 
-
-    # model = tf.keras.Sequential()
-    # model.add(layers.Input(shape=self.num_obs))
 
     model.compile(
       loss=tf.keras.losses.Huber(),
