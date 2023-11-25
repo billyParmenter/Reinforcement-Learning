@@ -22,7 +22,7 @@ class Agent_handler():
 
 
   def checkpoint(self, episode, agent):
-    if episode % 100 == 0 and episode != 0:
+    if episode % 100 == 0 and episode != 0 and self.last_save != None:
       self.last_save = agent.checkpoint()
 
 
@@ -80,18 +80,22 @@ class Agent_handler():
     
     print("\nDone training!\n\n")
 
-    return episode + 1, episode_steps, episode_rewards
+    return episode_steps, episode_rewards
 
   def train(self, agents, env):
-    results = []
+    results = {}
     count = 1
 
     for agent in agents:
-      print(f'~~~ Training Agent {count} {count}/{len(agents)} ~~~')
+      print(f'~~~ Training Agent: {agent.name} {count}/{len(agents)} ~~~')
 
-      num_episodes, average_steps, average_return = self.train_agent(agent, env)
+      average_steps, average_rewards = self.train_agent(agent, env)
 
-      results.append((num_episodes, average_steps, average_return, f'Agent #{count}'))
+      results[agent.name] = {"steps": average_steps, "rewards": average_rewards}
+
+      agent.save("final")
+
+      count += 1
 
     return results
 
