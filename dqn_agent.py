@@ -10,6 +10,7 @@ from datetime import datetime
 
 class DQN_Agent():
   def __init__(self, agent_params=None, load_path=None):
+    self.name = "DQN"
     self.verbose = 0
     buffer_size = 10000
     batch_size=32
@@ -24,7 +25,15 @@ class DQN_Agent():
       self.init_params(agent_params)
 
     else:
-      raise Exception("No parameters or load path given.")
+      self.num_obs = (171, 160, 3)
+      self.update_rate = 10
+      self.num_actions = 9
+      self.learning_rate = 0.01
+      self.discount_factor = 0.9
+      self.exploration_factor = 0.2
+
+      self.q_network = self.build_q_network()
+      self.target_q_network = self.build_q_network()
 
 
   def init_params(self, params):
@@ -40,13 +49,17 @@ class DQN_Agent():
 
 
   def checkpoint(self):
-    return self.save("DQN_" + datetime.now().strftime("%Y%m%d_%H"))
+    return self.save(datetime.now().strftime("%Y%m%d_%H"))
+  
+
+  def file_pathing(self, name):
+    return f'models/{self.name}_{name}_'
 
 
-  def save(self, save_path):
+  def save(self, name):
     os.makedirs("models", exist_ok=True)
     # Save agent_params
-    with open("models/" + save_path + "_params.json", "w") as params_file:
+    with open(f'{self.file_pathing(name)}_params.json', "w") as params_file:
       json.dump({
         "num_obs": self.num_obs,
         "num_actions": self.num_actions,
@@ -56,17 +69,17 @@ class DQN_Agent():
       }, params_file)
 
     # Save model weights
-    self.q_network.save_weights("models/" + save_path + "_model.h5")
+    self.q_network.save_weights(f'{self.file_pathing(name)}_model.h5')
 
-    return save_path
+    return self.file_pathing(name)
 
-  def load(self, load_path):
+  def load(self, name):
     # Load agent_params
-    with open("models/" + load_path + "_params.json", "r") as params_file:
+    with open(f'{self.file_pathing(name)}_params.json', "r") as params_file:
       params_data = json.load(params_file)
       self.init_params(params_data)
 
-    self.q_network.load_weights("models/" + load_path + "_model.h5")
+    self.q_network.load_weights(f'{self.file_pathing(name)}_model.h5')
 
 
   
