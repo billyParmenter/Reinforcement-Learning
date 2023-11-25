@@ -1,7 +1,7 @@
 import numpy as np
 from dqn_agent import DQN_Agent
 class Double_DQN_Agent(DQN_Agent):
-  def __init__(self, agent_params, load_path=None):
+  def __init__(self, agent_params=None, load_path=None):
       super().__init__(agent_params, load_path)
       self.name = "Double_DQN"
 
