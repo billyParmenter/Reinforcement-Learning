@@ -4,6 +4,10 @@ from dqn_agent import DQN_Agent
 
 
 class DuelingDQN_Agent(DQN_Agent):
+    def __init__(self, agent_params, load_path=None):
+      super().__init__(agent_params, load_path)
+      self.name = "Dueling_DQN"
+
     def build_q_network(self):
         input_layer = layers.Input(shape=self.num_obs)
         conv1 = layers.Conv2D(32, (8, 8), strides=(4, 4), activation="relu")(
