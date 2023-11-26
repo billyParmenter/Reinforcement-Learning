@@ -5,15 +5,16 @@ import random
 import json
 
 from tensorflow.keras import layers
+from tensorflow.keras.optimizers import Adam
 from collections import deque
 from datetime import datetime
-
+from assignment3_utils import preprocess_frame
 class DQN_Agent():
   def __init__(self, agent_params=None, load_path=None):
     self.name = "DQN"
     self.verbose = 0
-    buffer_size = 10000
-    batch_size=32
+    buffer_size = 5000
+    batch_size=8
 
     self.replay_buffer = deque(maxlen=buffer_size)
     self.batch_size = batch_size
@@ -25,12 +26,12 @@ class DQN_Agent():
       self.init_params(agent_params)
 
     else:
-      self.num_obs = (171, 160, 3)
+      self.num_obs = (84, 80, 4)
       self.update_rate = 10
-      self.num_actions = 9
+      self.num_actions = 6
       self.learning_rate = 0.01
-      self.discount_factor = 0.9
-      self.exploration_factor = 0.2
+      self.discount_factor = 0.95
+      self.exploration_factor = 1
 
       self.q_network = self.build_q_network()
       self.target_q_network = self.build_q_network()
@@ -46,6 +47,7 @@ class DQN_Agent():
 
     self.q_network = self.build_q_network()
     self.target_q_network = self.build_q_network()
+    self.target_q_network.set_weights(self.q_network.get_weights())
 
 
   def checkpoint(self):
@@ -119,11 +121,7 @@ class DQN_Agent():
     ])
 
 
-    model.compile(
-      loss=tf.keras.losses.Huber(),
-      optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
-      metrics=['accuracy']
-    )
+    model.compile(loss='mse', optimizer=Adam())
 
     return model
 
@@ -143,6 +141,12 @@ class DQN_Agent():
   def update_q_values(self, state, action, reward, next_state, done):
     reward = np.clip(reward, -1, 1)
 
+    state = preprocess_frame(state)
+    next_state = preprocess_frame(next_state)
+
+    state = np.concatenate([state] * 4, axis=-1)
+    next_state = np.concatenate([next_state] * 4, axis=-1)
+
     self.replay_buffer.append((state, action, reward, next_state, done))
 
     if done and len(self.replay_buffer) >= self.batch_size:
@@ -153,7 +157,7 @@ class DQN_Agent():
       target_q_values = self.q_network.predict(states, verbose=0)
       
       actions = actions.astype(int)
-      
+
       target_q_values[np.arange(self.batch_size), actions] = (1 - self.learning_rate) * target_q_values[np.arange(self.batch_size), actions] + self.learning_rate * targets
 
       self.q_network.fit(states, target_q_values, epochs=1, verbose=self.verbose)
