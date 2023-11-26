@@ -8,42 +8,34 @@ from tensorflow.keras import layers
 from tensorflow.keras.optimizers import Adam
 from collections import deque
 from datetime import datetime
-from assignment3_utils import preprocess_frame
 class DQN_Agent():
-  def __init__(self, agent_params=None, load_path=None):
-    self.name = "DQN"
+  def __init__(self, agent_params=None, file=None):
     self.verbose = 0
-    buffer_size = 5000
-    batch_size=8
+    
 
-    self.replay_buffer = deque(maxlen=buffer_size)
-    self.batch_size = batch_size
+    self.replay_buffer = deque(maxlen=5000)
 
-    if load_path:
-      self.load(load_path)
+    if file:
+      self.load(file)
 
     elif agent_params:
       self.init_params(agent_params)
 
     else:
-      self.num_obs = (84, 80, 4)
-      self.update_rate = 10
-      self.num_actions = 6
-      self.learning_rate = 0.01
-      self.discount_factor = 0.95
-      self.exploration_factor = 1
-
-      self.q_network = self.build_q_network()
-      self.target_q_network = self.build_q_network()
+      raise Exception("No params")
 
 
   def init_params(self, params):
+    self.name = params["name"]
     self.num_obs = params["num_obs"]
+    self.batch_size=params["batch_size"]
     self.update_rate = params["update_rate"]
     self.num_actions = params["num_actions"]
     self.learning_rate = params["learning_rate"]
     self.discount_factor = params["discount_factor"]
+    self.exploration_decay = params["exploration_decay"]
     self.exploration_factor = params["exploration_factor"]
+    self.min_exploration_rate = params["min_exploration_rate"]
 
     self.q_network = self.build_q_network()
     self.target_q_network = self.build_q_network()
@@ -51,37 +43,45 @@ class DQN_Agent():
 
 
   def checkpoint(self):
-    return self.save(datetime.now().strftime("%Y%m%d_%H"))
+    print("\t~~ CHECKPOINT ~~")
+    return self.save("checkpoint")
   
 
-  def file_pathing(self, name):
-    return f'models/{self.name}_{name}_'
+  def file_pathing(self, suffix=None):
+    if suffix:
+      return f'models/{self.name}_{suffix}_'
+    return f'models/{self.name}_'
 
 
   def save(self, name):
     os.makedirs("models", exist_ok=True)
     # Save agent_params
-    with open(f'{self.file_pathing(name)}_params.json', "w") as params_file:
+    with open(f'{self.file_pathing(name)}params.json', "w") as params_file:
       json.dump({
+        "name": self.name,
         "num_obs": self.num_obs,
+        "batch_size": self.batch_size,
+        "update_rate": self.update_rate,
         "num_actions": self.num_actions,
         "learning_rate": self.learning_rate,
         "discount_factor": self.discount_factor,
-        "exploration_factor": self.exploration_factor
+        "exploration_decay": self.exploration_decay,
+        "exploration_factor": self.exploration_factor,
+        "min_exploration_rate": self.min_exploration_rate,
       }, params_file)
 
     # Save model weights
-    self.q_network.save_weights(f'{self.file_pathing(name)}_model.h5')
+    self.q_network.save_weights(f'{self.file_pathing(name)}model.h5')
 
     return self.file_pathing(name)
 
-  def load(self, name):
+  def load(self, file):
     # Load agent_params
-    with open(f'{self.file_pathing(name)}_params.json', "r") as params_file:
+    with open(f'models/{file}_params.json', "r") as params_file:
       params_data = json.load(params_file)
       self.init_params(params_data)
 
-    self.q_network.load_weights(f'{self.file_pathing(name)}_model.h5')
+    self.q_network.load_weights(f'models/{file}_model.h5')
 
 
   
@@ -92,6 +92,8 @@ class DQN_Agent():
 
 
   def sample_from_replay_buffer(self):
+    self.exploration_factor = max(self.min_exploration_rate, self.exploration_factor * self.exploration_decay)
+
     batch = random.sample(self.replay_buffer, self.batch_size)
 
     batch = [list(entry) for entry in batch]
@@ -140,12 +142,6 @@ class DQN_Agent():
 
   def update_q_values(self, state, action, reward, next_state, done):
     reward = np.clip(reward, -1, 1)
-
-    state = preprocess_frame(state)
-    next_state = preprocess_frame(next_state)
-
-    state = np.concatenate([state] * 4, axis=-1)
-    next_state = np.concatenate([next_state] * 4, axis=-1)
 
     self.replay_buffer.append((state, action, reward, next_state, done))
 

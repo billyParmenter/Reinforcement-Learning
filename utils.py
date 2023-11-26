@@ -22,7 +22,7 @@ def plot_results(result, agent_name, smoothing=1):
     for metric, values in result.items():
         moving_avg_steps = np.convolve(values, np.ones(smoothing)/smoothing, mode='valid')
 
-        plt.subplot(1, 2, i)
+        plt.subplot(1, 3, i)
         plt.plot(moving_avg_steps)
         plt.title(f'{agent_name} - Episode {metric}')
         plt.xlabel('Episode')
