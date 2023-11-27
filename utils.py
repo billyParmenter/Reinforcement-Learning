@@ -17,7 +17,7 @@ def describe_env(env):
 
 def plot_results(result, agent_name, smoothing=1):
     i = 1
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(20, 6))
     
     for metric, values in result.items():
         moving_avg_steps = np.convolve(values, np.ones(smoothing)/smoothing, mode='valid')

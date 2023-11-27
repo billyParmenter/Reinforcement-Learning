@@ -12,7 +12,6 @@ class DQN_Agent():
   def __init__(self, agent_params=None, file=None):
     self.verbose = 0
     
-
     self.replay_buffer = deque(maxlen=5000)
 
     if file:
@@ -43,7 +42,7 @@ class DQN_Agent():
 
 
   def checkpoint(self):
-    print("\t~~ CHECKPOINT ~~")
+    print(f'\tCheckpoint: {datetime.now().strftime("%m-%d %H:%M")}')
     return self.save("checkpoint")
   
 
@@ -123,7 +122,7 @@ class DQN_Agent():
     ])
 
 
-    model.compile(loss='mse', optimizer=Adam())
+    model.compile(optimizer=Adam(learning_rate=self.learning_rate), loss='mse')
 
     return model
 
@@ -156,6 +155,6 @@ class DQN_Agent():
 
       target_q_values[np.arange(self.batch_size), actions] = (1 - self.learning_rate) * target_q_values[np.arange(self.batch_size), actions] + self.learning_rate * targets
 
-      self.q_network.fit(states, target_q_values, epochs=1, verbose=self.verbose)
+      self.q_network.fit(states, target_q_values, epochs=2, verbose=self.verbose)
 
 
