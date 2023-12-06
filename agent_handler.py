@@ -15,15 +15,22 @@ class Agent_handler():
     self.progress = 0
 
 
-  def update_progress(self, episode):
+  def update_progress(self, episode, interval_rewards, interval_loss):
     self.progress_delta += round(((episode) / self.num_episodes) * 100) - self.progress
     self.progress = round(((episode) / self.num_episodes) * 100)
 
     if self.progress_delta >= self.notify_percent:
+      avg_reward = np.mean(interval_rewards) if interval_rewards is not None else 0
+      avg_loss = np.mean(interval_loss) if interval_loss is not None else 0
       print(f'\tEpisode\t: {episode + 1}/{self.num_episodes} {self.progress}%')
+      print(f'\tAverage Reward: {avg_reward:.2f}, Average Loss: {avg_loss:.6f}')
       self.progress_delta = round(((episode + 1) / self.num_episodes) * 100) - self.progress
+      interval_rewards = []
+      interval_loss = []
     elif episode >= self.num_episodes:
       print(f'\tEpisode\t: {episode + 1}/{self.num_episodes} 100%')
+
+    return interval_rewards, interval_loss
 
 
 
@@ -35,7 +42,6 @@ class Agent_handler():
   def train_agent(self, agent, env):
     episode_steps = []
     episode_rewards = []
-    best_reward = -int(1e9)
 
     self.progress = 0
     self.progress_delta = 0
@@ -43,6 +49,10 @@ class Agent_handler():
 
 
     print(f'\tEpisode\t: 0/{self.num_episodes} 0%')
+
+    interval_rewards = []
+    interval_loss = []
+
 
     for episode in range(self.num_episodes):
       steps = 0
@@ -52,6 +62,7 @@ class Agent_handler():
       frame = process_frame(state_reset[0], self.crop)
       images = deque(maxlen=4)
       images.append(frame)
+
 
       for _ in range(self.skip):
         state_step = env.step(0)
@@ -71,6 +82,9 @@ class Agent_handler():
           next_state = images
 
           agent.update_q_values(state, action, reward, next_state, done)
+
+          interval_rewards.append(reward)
+          interval_loss.append(agent.last_loss)
 
           state = next_state
 
@@ -96,13 +110,10 @@ class Agent_handler():
 
         else:
           raise e
-      if total_reward > best_reward:
-        best_reward = total_reward
-        print(f'\tBetter\t: {best_reward} ~ {datetime.now().strftime("%m-%d %H:%M")}')
-        agent.save('best')
+
 
       self.checkpoint(episode, agent)
-      self.update_progress(episode)
+      interval_rewards, interval_loss = self.update_progress(episode, interval_rewards, interval_loss)
     print(f'\n\tDone\t: {datetime.now().strftime("%m-%d %H:%M")}\n')
     
     print("Done training!\n\n")

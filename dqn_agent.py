@@ -11,7 +11,8 @@ from datetime import datetime
 class DQN_Agent():
   def __init__(self, agent_params=None, file=None):
     self.verbose = 0
-    
+    self.last_loss = 0
+
     self.replay_buffer = deque(maxlen=5000)
 
     if file:
@@ -102,6 +103,8 @@ class DQN_Agent():
 
     states, actions, rewards, next_states, dones = np.array(batch, dtype=object).T
 
+
+
     states = np.array(states.tolist(), dtype=np.uint8)
     next_states = np.array(next_states.tolist(), dtype=np.uint8)
 
@@ -113,6 +116,7 @@ class DQN_Agent():
   def build_q_network(self):
     model = tf.keras.Sequential([
       layers.Input(shape=self.num_obs),
+      layers.Permute((2, 3, 1)),
       layers.Conv2D(32, (8, 8), strides=(4, 4), activation='relu'),
       layers.Conv2D(64, (4, 4), strides=(2, 2), activation='relu'),
       layers.Conv2D(64, (3, 3), activation='relu'),
@@ -144,7 +148,7 @@ class DQN_Agent():
 
     self.replay_buffer.append((state, action, reward, next_state, done))
 
-    if done and len(self.replay_buffer) >= self.batch_size:
+    if len(self.replay_buffer) >= self.batch_size:
       states, actions, rewards, next_states, dones = self.sample_from_replay_buffer()
 
       targets = rewards + self.discount_factor * np.max(self.target_q_network.predict(next_states, verbose=0), axis=1) * (1 - dones)
@@ -156,5 +160,8 @@ class DQN_Agent():
       target_q_values[np.arange(self.batch_size), actions] = (1 - self.learning_rate) * target_q_values[np.arange(self.batch_size), actions] + self.learning_rate * targets
 
       self.q_network.fit(states, target_q_values, epochs=2, verbose=self.verbose)
+
+      last_loss = self.q_network.evaluate(states, target_q_values, verbose=1)
+      self.last_loss = last_loss
 
 
