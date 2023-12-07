@@ -10,8 +10,11 @@ class DuelingDQN_Agent(DQN_Agent):
 
     def build_q_network(self):
         input_layer = layers.Input(shape=self.num_obs)
+
+        permuted_input = layers.Permute((2, 3, 1))(input_layer)
+
         conv1 = layers.Conv2D(32, (8, 8), strides=(4, 4), activation="relu")(
-            input_layer
+            permuted_input
         )
         conv2 = layers.Conv2D(64, (4, 4), strides=(2, 2), activation="relu")(conv1)
         conv3 = layers.Conv2D(64, (3, 3), activation="relu")(conv2)

@@ -42,6 +42,7 @@ class Agent_handler():
   def train_agent(self, agent, env):
     episode_steps = []
     episode_rewards = []
+    best_reward = -int(1e9)
 
     self.progress = 0
     self.progress_delta = 0
@@ -110,6 +111,11 @@ class Agent_handler():
 
         else:
           raise e
+        
+      if total_reward > best_reward:
+        best_reward = total_reward
+        print(f'\tBetter\t: {best_reward} ~ {datetime.now().strftime("%m-%d %H:%M")}')
+        agent.save('best')
 
 
       self.checkpoint(episode, agent)

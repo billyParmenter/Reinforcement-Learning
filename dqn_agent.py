@@ -26,7 +26,7 @@ class DQN_Agent():
 
 
   def init_params(self, params):
-    self.name = params["name"]
+    self.name = "DQN"
     self.num_obs = params["num_obs"]
     self.batch_size=params["batch_size"]
     self.update_rate = params["update_rate"]
@@ -49,12 +49,12 @@ class DQN_Agent():
 
   def file_pathing(self, suffix=None):
     if suffix:
-      return f'models/{self.name}_{suffix}_'
-    return f'models/{self.name}_'
+      return f'./models/{self.name}_{suffix}_'
+    return f'./models/{self.name}_'
 
 
   def save(self, name):
-    os.makedirs("models", exist_ok=True)
+    os.makedirs("./models", exist_ok=True)
     # Save agent_params
     with open(f'{self.file_pathing(name)}params.json', "w") as params_file:
       json.dump({
@@ -77,11 +77,11 @@ class DQN_Agent():
 
   def load(self, file):
     # Load agent_params
-    with open(f'models/{file}_params.json', "r") as params_file:
+    with open(f'./models/{file}_params.json', "r") as params_file:
       params_data = json.load(params_file)
       self.init_params(params_data)
 
-    self.q_network.load_weights(f'models/{file}_model.h5')
+    self.q_network.load_weights(f'./models/{file}_model.h5')
 
 
   
@@ -148,7 +148,7 @@ class DQN_Agent():
 
     self.replay_buffer.append((state, action, reward, next_state, done))
 
-    if len(self.replay_buffer) >= self.batch_size:
+    if done and len(self.replay_buffer) >= self.batch_size:
       states, actions, rewards, next_states, dones = self.sample_from_replay_buffer()
 
       targets = rewards + self.discount_factor * np.max(self.target_q_network.predict(next_states, verbose=0), axis=1) * (1 - dones)
@@ -159,9 +159,9 @@ class DQN_Agent():
 
       target_q_values[np.arange(self.batch_size), actions] = (1 - self.learning_rate) * target_q_values[np.arange(self.batch_size), actions] + self.learning_rate * targets
 
-      self.q_network.fit(states, target_q_values, epochs=2, verbose=self.verbose)
+      self.q_network.fit(states, target_q_values, epochs=1, verbose=self.verbose)
 
-      last_loss = self.q_network.evaluate(states, target_q_values, verbose=1)
+      last_loss = self.q_network.evaluate(states, target_q_values, verbose=0)
       self.last_loss = last_loss
 
 

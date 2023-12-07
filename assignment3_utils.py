@@ -10,7 +10,8 @@ def downsample(img):
     return img[::2, ::2]
 
 def transform_reward(reward):
-    return np.sign(reward)
+    # return np.sign(reward)
+    return reward
 
 def to_grayscale(img):
     return np.mean(img, axis=2).astype(np.uint8)

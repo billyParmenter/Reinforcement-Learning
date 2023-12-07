@@ -26,7 +26,7 @@ def plot_results(result, agent_name, smoothing=1):
         plt.plot(moving_avg_steps)
         plt.title(f'{agent_name} - Episode {metric}')
         plt.xlabel('Episode')
-        plt.ylabel(f'Smoothed {metric} (smoothing={smoothing})')
+        plt.ylabel(f'{metric}')
 
         i += 1
 
