@@ -1,8 +1,8 @@
 import numpy as np
 from dqn_agent import DQN_Agent
 class Double_DQN_Agent(DQN_Agent):
-  def __init__(self, agent_params=None, load_path=None):
-      super().__init__(agent_params, load_path)
+  def __init__(self, agent_params=None, file=None):
+      super().__init__(agent_params, file)
       self.name = "Double_DQN"
 
   def update_q_values(self, state, action, reward, next_state, done):

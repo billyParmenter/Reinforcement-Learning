@@ -11,7 +11,6 @@ from datetime import datetime
 class DQN_Agent():
   def __init__(self, agent_params=None, file=None):
     self.verbose = 0
-    self.last_loss = 0
 
     self.replay_buffer = deque(maxlen=5000)
 
@@ -160,8 +159,4 @@ class DQN_Agent():
       target_q_values[np.arange(self.batch_size), actions] = (1 - self.learning_rate) * target_q_values[np.arange(self.batch_size), actions] + self.learning_rate * targets
 
       self.q_network.fit(states, target_q_values, epochs=1, verbose=self.verbose)
-
-      last_loss = self.q_network.evaluate(states, target_q_values, verbose=0)
-      self.last_loss = last_loss
-
 

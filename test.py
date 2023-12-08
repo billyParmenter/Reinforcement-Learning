@@ -37,12 +37,12 @@ def get_params(batch, update):
 agents = []
 
 agents.append(DQN_Agent(get_params(16, 20)))
-agents.append(Double_DQN_Agent(get_params(16, 20)))
-agents.append(DuelingDQN_Agent(get_params(16, 20)))
+# agents.append(Double_DQN_Agent(get_params(16, 20)))
+# agents.append(DuelingDQN_Agent(get_params(16, 20)))
 
 
 handler = Agent_handler({
-  "num_episodes":200,
+  "num_episodes":500,
   "max_steps":100_000,
   "notify_percent":10,
   "skip": 85,
@@ -57,7 +57,7 @@ handler = Agent_handler({
 
 results = handler.train(agents, env)
 
-output_file_path = "results.json"
+output_file_path = "results2.json"
 with open(output_file_path, "w") as json_file:
   json.dump(results, json_file)
 
