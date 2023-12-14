@@ -1,13 +1,16 @@
-import os
 import tensorflow as tf
 import numpy as np
 import random
 import json
+import os
 
-from tensorflow.keras import layers
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras import layers
 from collections import deque
 from datetime import datetime
+
+
+# Can be initalized from parameters or loaded from a file
 class DQN_Agent():
   def __init__(self, agent_params=None, file=None):
     self.verbose = 0
@@ -41,17 +44,20 @@ class DQN_Agent():
     self.target_q_network.set_weights(self.q_network.get_weights())
 
 
+  # Saves the model with the checkpoint suffix
   def checkpoint(self):
     print(f'\tCheckpoint: {datetime.now().strftime("%m-%d %H:%M")}')
     return self.save("checkpoint")
   
 
+  # Builds the pathing for saving and loading different models
   def file_pathing(self, suffix=None):
     if suffix:
       return f'./models/{self.name}_{suffix}_'
     return f'./models/{self.name}_'
 
 
+  #  Saves a model with the given name
   def save(self, name):
     os.makedirs("./models", exist_ok=True)
     # Save agent_params
@@ -74,22 +80,25 @@ class DQN_Agent():
 
     return self.file_pathing(name)
 
+
+  # Loads a model with the given name
   def load(self, file):
     # Load agent_params
     with open(f'./models/{file}_params.json', "r") as params_file:
       params_data = json.load(params_file)
       self.init_params(params_data)
-
+    # load agent
     self.q_network.load_weights(f'./models/{file}_model.h5')
 
 
-  
+  # Checks to see if the episode is at the update interval
+  # Also will update if it is
   def update_target_network(self, episode):
     if episode % self.update_rate == 0:
       self.target_q_network.set_weights(self.q_network.get_weights())
 
 
-
+  # Will get a sample from the replay memory
   def sample_from_replay_buffer(self):
     self.exploration_factor = max(self.min_exploration_rate, self.exploration_factor * self.exploration_decay)
 
@@ -102,8 +111,6 @@ class DQN_Agent():
 
     states, actions, rewards, next_states, dones = np.array(batch, dtype=object).T
 
-
-
     states = np.array(states.tolist(), dtype=np.uint8)
     next_states = np.array(next_states.tolist(), dtype=np.uint8)
 
@@ -112,6 +119,7 @@ class DQN_Agent():
     return states, actions, rewards, next_states, dones
 
 
+  # Builds the network and the target network 
   def build_q_network(self):
     model = tf.keras.Sequential([
       layers.Input(shape=self.num_obs),
@@ -142,12 +150,13 @@ class DQN_Agent():
     return np.argmax(q_values_state)
 
 
+  # Will update the models q values every step
   def update_q_values(self, state, action, reward, next_state, done):
     reward = np.clip(reward, -1, 1)
 
     self.replay_buffer.append((state, action, reward, next_state, done))
 
-    if done and len(self.replay_buffer) >= self.batch_size:
+    if len(self.replay_buffer) >= self.batch_size:
       states, actions, rewards, next_states, dones = self.sample_from_replay_buffer()
 
       targets = rewards + self.discount_factor * np.max(self.target_q_network.predict(next_states, verbose=0), axis=1) * (1 - dones)
