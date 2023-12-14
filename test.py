@@ -37,28 +37,25 @@ agents = []
 agents.append(DQN_Agent(params))
 agents.append(Double_DQN_Agent(params))
 agents.append(DuelingDQN_Agent(params))
-for agent in agents:
-  agent.q_network.summary()
 
+handler = Agent_handler({
+  "num_episodes":1,
+  "max_steps":2,
+  "notify_percent":10,
+  "skip": 85,
+  "checkpoint_interval": 100,
+  "crop": {
+    "top": 0,
+    "bottom": -39,
+    "left": 0,
+    "right": -1,
+  }
+})
 
-# handler = Agent_handler({
-#   "num_episodes":1000,
-#   "max_steps":100_000,
-#   "notify_percent":10,
-#   "skip": 85,
-#   "checkpoint_interval": 100,
-#   "crop": {
-#     "top": 0,
-#     "bottom": -39,
-#     "left": 0,
-#     "right": -1,
-#   }
-# })
+results = handler.train(agents, env)
 
-# results = handler.train(agents, env)
+output_file_path = "results2.json"
+with open(output_file_path, "w") as json_file:
+  json.dump(results, json_file)
 
-# output_file_path = "results2.json"
-# with open(output_file_path, "w") as json_file:
-#   json.dump(results, json_file)
-
-# print(f"Results saved to {output_file_path}")
+print(f"Results saved to {output_file_path}")

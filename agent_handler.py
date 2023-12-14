@@ -1,7 +1,7 @@
 from collections import deque
 from datetime import datetime
 from assignment3_utils import *
-
+import utils as Utils
 class Agent_handler():
   def __init__(self, agent_params):
     self.notify_percent = agent_params["notify_percent"]
@@ -57,14 +57,14 @@ class Agent_handler():
       total_reward = 0
 
       state_reset = env.reset()
-      frame = process_frame(state_reset[0], self.crop)
+      frame = Utils.process_frame(state_reset[0], self.crop)
       images = deque(maxlen=4)
       images.append(frame)
 
 
       for _ in range(self.skip):
         state_step = env.step(0)
-        frame = process_frame(state_step[0], self.crop)
+        frame = Utils.process_frame(state_step[0], self.crop)
         images.append(frame)
 
       state = images
@@ -73,9 +73,9 @@ class Agent_handler():
 
           action = agent.select_action(state)
           next_frame, reward, done, _, _ = env.step(action)
-          reward = transform_reward(reward)
+          reward = Utils.transform_reward(reward)
 
-          next_frame = process_frame(next_frame, self.crop)
+          next_frame = Utils.process_frame(next_frame, self.crop)
           images.append(next_frame)
           next_state = images
 
