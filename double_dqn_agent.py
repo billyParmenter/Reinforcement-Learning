@@ -1,5 +1,7 @@
 import numpy as np
 from dqn_agent import DQN_Agent
+
+#  Inherits the DQN agent and overrides the update_q_values method to use the Double DQN method
 class Double_DQN_Agent(DQN_Agent):
   def __init__(self, agent_params=None, file=None):
       super().__init__(agent_params, file)
