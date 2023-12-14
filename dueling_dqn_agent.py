@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from dqn_agent import DQN_Agent
 
-
+#  Inherits the DQN agent and overrides the build_q_network method to use the Dueling DQN model
 class DuelingDQN_Agent(DQN_Agent):
     def __init__(self, agent_params=None, file=None):
       super().__init__(agent_params, file)
