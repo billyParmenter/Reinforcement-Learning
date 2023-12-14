@@ -1,7 +1,26 @@
 from collections import deque
 from datetime import datetime
-from assignment3_utils import *
 import utils as Utils
+import numpy as np
+
+# The agent handler takes a dictionary of parameters that 
+# can be changed depending on the environment and preference
+# 
+#  Example:
+#  {
+#   "num_episodes":100,
+#   "max_steps":5000,
+#   "notify_percent":10,
+#   "skip": 85,
+#   "checkpoint_interval": 100,
+#   "crop": {
+#     "top": 0,
+#     "bottom": -39,
+#     "left": 0,
+#     "right": -1,
+#   }
+# }
+
 class Agent_handler():
   def __init__(self, agent_params):
     self.notify_percent = agent_params["notify_percent"]
@@ -15,6 +34,9 @@ class Agent_handler():
     self.progress = 0
 
 
+  # update_progress takes the current episode number and the rewards since the last update interval
+  # If the training has crossed an update interval calculated from the notify_percent parameter
+  # then the system will print an update 
   def update_progress(self, episode, interval_rewards):
     self.progress_delta += round(((episode) / self.num_episodes) * 100) - self.progress
     self.progress = round(((episode) / self.num_episodes) * 100)
@@ -31,12 +53,15 @@ class Agent_handler():
     return interval_rewards
 
 
-
+  # Takes the surrent episode and the agent
+  # Will check if its at the checkpoint interval specified in the parameters
+  # and saves the model if it is 
   def checkpoint(self, episode, agent):
     if episode % self.checkpoint_interval == 0 and episode != 0 and self.last_save != None:
       self.last_save = agent.checkpoint()
 
 
+  # Takes a single agent and trains it based on the given parameters
   def train_agent(self, agent, env):
     episode_steps = []
     episode_rewards = []
@@ -122,6 +147,8 @@ class Agent_handler():
 
     return episode_steps, episode_rewards
 
+  # Will take a list of agents and train them in the given environment
+  # Also keeps track of the evaluation metrics and returns them at the end of training
   def train(self, agents, env):
     results = {}
     count = 1
