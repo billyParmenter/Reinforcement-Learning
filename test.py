@@ -1,14 +1,14 @@
-import utils as Utils
-from dqn_agent import DQN_Agent
-from double_dqn_agent import Double_DQN_Agent
-from dueling_dqn_agent import DuelingDQN_Agent
-from agent_handler import Agent_handler
-from assignment3_utils import *
-import numpy as np
-import gym
 import tensorflow as tf
+import utils as Utils
 import json
+import gym
 
+from dueling_dqn_agent import DuelingDQN_Agent
+from double_dqn_agent import Double_DQN_Agent
+from agent_handler import Agent_handler
+from dqn_agent import DQN_Agent
+
+#Check to see if there is a GPU available in the environment(Computer)
 gpu_available = tf.config.list_physical_devices('GPU')
 
 if gpu_available:
@@ -16,8 +16,11 @@ if gpu_available:
 else:
   print("No GPU found. TensorFlow is using CPU.")
 
+
+# Initialize the environtment (Agent)
 env = gym.make('MsPacman-v4', render_mode='rgb_array')
 
+# Setup the agent parameters
 num_obs, num_actions = Utils.describe_env(env)
 
 params = {
@@ -38,6 +41,8 @@ agents.append(DQN_Agent(params))
 agents.append(Double_DQN_Agent(params))
 agents.append(DuelingDQN_Agent(params))
 
+
+# Setup the handler parameters
 handler = Agent_handler({
   "num_episodes":1,
   "max_steps":2,
@@ -54,6 +59,9 @@ handler = Agent_handler({
 
 results = handler.train(agents, env)
 
+# Sometimes we are working in a container so visualization is not available
+# We save it to a file and open it in the project.ipynb on a machine that has
+# a display
 output_file_path = "results2.json"
 with open(output_file_path, "w") as json_file:
   json.dump(results, json_file)
