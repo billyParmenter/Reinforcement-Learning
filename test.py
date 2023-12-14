@@ -44,8 +44,8 @@ agents.append(DuelingDQN_Agent(params))
 
 # Setup the handler parameters
 handler = Agent_handler({
-  "num_episodes":1,
-  "max_steps":2,
+  "num_episodes":100,
+  "max_steps":5000,
   "notify_percent":10,
   "skip": 85,
   "checkpoint_interval": 100,
