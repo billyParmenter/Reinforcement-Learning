@@ -20,45 +20,45 @@ env = gym.make('MsPacman-v4', render_mode='rgb_array')
 
 num_obs, num_actions = Utils.describe_env(env)
 
-def get_params(batch, update):
-  params = {
-    "num_obs": (4, 86, 80),
-    "num_actions": num_actions,
-    "update_rate": update,
-    "learning_rate": 0.001,
-    "discount_factor": 0.95,
-    "exploration_factor": 1,
-    "min_exploration_rate": 0.05,
-    "exploration_decay": 0.995,
-    "batch_size": batch,
-  }
-  return params
+params = {
+  "num_obs": (4, 86, 80),
+  "num_actions": num_actions,
+  "update_rate": 20,
+  "learning_rate": 0.00005,
+  "discount_factor": 0.95,
+  "exploration_factor": 1,
+  "min_exploration_rate": 0.05,
+  "exploration_decay": 0.995,
+  "batch_size": 16,
+}
 
 agents = []
 
-agents.append(DQN_Agent(get_params(16, 20)))
-# agents.append(Double_DQN_Agent(get_params(16, 20)))
-# agents.append(DuelingDQN_Agent(get_params(16, 20)))
+agents.append(DQN_Agent(params))
+agents.append(Double_DQN_Agent(params))
+agents.append(DuelingDQN_Agent(params))
+for agent in agents:
+  agent.q_network.summary()
 
 
-handler = Agent_handler({
-  "num_episodes":500,
-  "max_steps":100_000,
-  "notify_percent":10,
-  "skip": 85,
-  "checkpoint_interval": 50,
-  "crop": {
-    "top": 0,
-    "bottom": -39,
-    "left": 0,
-    "right": -1,
-  }
-})
+# handler = Agent_handler({
+#   "num_episodes":1000,
+#   "max_steps":100_000,
+#   "notify_percent":10,
+#   "skip": 85,
+#   "checkpoint_interval": 100,
+#   "crop": {
+#     "top": 0,
+#     "bottom": -39,
+#     "left": 0,
+#     "right": -1,
+#   }
+# })
 
-results = handler.train(agents, env)
+# results = handler.train(agents, env)
 
-output_file_path = "results2.json"
-with open(output_file_path, "w") as json_file:
-  json.dump(results, json_file)
+# output_file_path = "results2.json"
+# with open(output_file_path, "w") as json_file:
+#   json.dump(results, json_file)
 
-print(f"Results saved to {output_file_path}")
+# print(f"Results saved to {output_file_path}")
